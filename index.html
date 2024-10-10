@@ -1,0 +1,903 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+	<meta charset="UTF-8" />
+		<title>THE CHOSEN</title>
+	</head>
+
+	<body onselectstart="return false" >
+		<script>
+		  window.fbAsyncInit = function() {
+			FB.init({
+			  appId      : '847098595435263',
+			  xfbml      : true,
+			  version    : 'v2.6'
+			});
+
+			// ADD ADDITIONAL FACEBOOK CODE HERE
+			
+			//--------------- INICIANDO CÓDIGO DE LOGIN ----------------
+			// Place following code after FB.init call.
+
+				function onLogin(response) {
+				  if (response.status == 'connected') {
+					FB.api('/me?fields=first_name', function(data) {
+					  var welcomeBlock = document.getElementById('fb-welcome');
+					  welcomeBlock.innerHTML = 'Hello, ' + data.first_name + '!';
+					});
+				  }
+				}
+
+				FB.getLoginStatus(function(response) {
+				  // Check login status on load, and if the user is
+				  // already logged in, go directly to the welcome message.
+				  if (response.status == 'connected') {
+					onLogin(response);
+				  } else {
+					// Otherwise, show Login dialog first.
+					FB.login(function(response) {
+					  onLogin(response);
+					}, {scope: 'user_friends, email'});
+				  }
+				});
+			//--------------- FINALIZANDO CÓDIGO DE LOGIN --------------
+		  };
+
+		  (function(d, s, id){
+			 var js, fjs = d.getElementsByTagName(s)[0];
+			 if (d.getElementById(id)) {return;}
+			 js = d.createElement(s); js.id = id;
+			 js.src = "//connect.facebook.net/en_US/sdk.js";
+			 fjs.parentNode.insertBefore(js, fjs);
+		   }(document, 'script', 'facebook-jssdk'));
+		</script>
+		
+		<center>
+			<h1>THE CHOSEN</h1>
+			<canvas width="800" height="600" id="main" style="border:2px solid #000;">
+			<video id="intro" controls autoplay>
+			<source src=OUTR.mp4 type=video/mp4>
+			</canvas>
+		</center>
+
+		<script type="text/javascript" src="JS/MySprite.js"></script>
+		<script type="text/javascript" src="JS/Button.js"></script>
+		<script type="text/javascript" src="JS/Jogador.js"></script>
+		<script type="text/javascript" src="JS/Colisao.js"></script>
+		<script type="text/javascript" src="JS/Falas.js"></script>
+		<script type="text/javascript" src="JS/LoucosIA.js"></script>
+		<script type="text/javascript" src="JS/HUD.js"></script>
+		<script type="text/javascript" src="CUSTCENE/CENASMAIN.js"></script>
+		<script type="text/javascript" src="CUSTCENE/BAD1.js"></script>
+		<script type="text/javascript" src="MENUS/MENU.js"></script>
+		<script type="text/javascript" src="MENUS/CREDITOS.js"></script>
+		<script type="text/javascript" src="MENUS/INTRO.js"></script>
+		<script type="text/javascript" src="MENUS/OPTIONS.js"></script>
+		<script type="text/javascript" src="MENUS/GAMEOVER.js"></script>
+		<script type="text/javascript" src="MENUS/VIDA.js"></script>
+		<script type="text/javascript" src="MENUS/INVENT.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/2ANDAR/BIBLIOTECA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/2ANDAR/CORREDOR2.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/2ANDAR/COZINHA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/2ANDAR/LAZER.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/2ANDAR/REFEITORIO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/ALMOXARIFADO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/BANHEIRO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/CHUVEIROS.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/CORREDOR3.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/QPENTA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/3ANDAR/SPROJECAO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/AREAEXTERNA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/CORREDOREXT.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/CORREDORTERREO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/DISPENSA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/FBANHEIRO.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/LAVANDERIA.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/SALAARQ.js"></script>
+		<script type="text/javascript" src="JS/LOCAL/TERREO/SALAF.js"></script>
+
+		<script>
+			//Canvas
+			var canvas = document.getElementById("main");
+			var screen = canvas.getContext("2d");
+
+			//enumerador de cenas
+			var scene = {INTRO: 0, MENU: 1, CREDITS: 2, OPTIONS: 3, GAMEOVER: 4, BIBLIOTECA: 5, CORREDOR2: 6, COZINHA: 7, LAZER: 8, REFEITORIO: 9, ALMOXARIFADO: 10, BANHEIRO: 11, CHUVEIROS: 12, CORREDOR3: 13, QPENTA: 14, SPROJECAO: 15, AREAEXTERNA: 16, CORREDOREXT: 17, CORREDORTERREO: 18, DISPENSA: 19, FBANHEIRO: 20, LAVANDERIA: 21, SALAARQ: 22, SALAF: 23};
+			jogadorStop = false;
+			//Variavel de cena atual
+			var currentScene = scene.INTRO;
+			
+			var musicaGlobal = true;
+			var somGlobal = true;
+
+			var resetGame = false;
+			//Instaciando as Cenas
+			var intro = new Intro();
+			var menu = new Menu();
+			var credits = new Credits();
+			var options = new Options();
+			var gameover = new GameOver();
+			var vida = new Vida();
+			var invent = new Inventario();
+			var biblioteca = new Biblioteca();
+			var corredor2A = new Corredor2Andar();
+			var cozinha = new Cozinha();
+			var lazer = new Lazer();
+			var refeitorio = new Refeitorio();
+			var almoxarifado = new Almoxarifado();
+			var banheiro = new Banheiro();
+			var chuveiros = new Chuveiros();
+			var corredor3A = new Corredor3Andar();
+			var qpenta = new QPenta();
+			var sprojecao = new SProjecao();
+			var areaexterna = new AreaExterna();
+			var corredorext = new CorredorExt();
+			var corredorterreo = new CorredorTerreo();
+			var dispensa = new Dispensa();
+			var fbanheiro = new FBanheiro();
+			var lavanderia = new Lavanderia();
+			var salaarq = new SalaArquivo();
+			var salaf = new SalaFuncionarios();
+			//SomFundo 26/04/2016
+			var somFundoJogo = new Audio();
+			somFundoJogo.src = "AUDIO/musicF.mp3";
+			//SomFundo 26/04/2016
+
+		//----------------------------------------------------------------------------------------------
+		 Load();
+
+		 function Load()
+		 {
+		 console.log("Carregou");
+		 Loop();
+		 }
+
+		 function Loop()
+		 {
+		 //Clear LIMPAR
+		 screen.clearRect(0,0,canvas.width, canvas.height);
+			//Reset do Game
+			if(resetGame == true)
+			{
+				//Reset Das Funcoes
+				intro = new Intro();
+				menu = new Menu();
+				credits = new Credits();
+				options = new Options();
+				gameover = new GameOver();
+				vida = new Vida();
+				invent = new Inventario();
+				biblioteca = new Biblioteca();
+				corredor2A = new Corredor2Andar();
+				cozinha = new Cozinha();
+				lazer = new Lazer();
+				refeitorio = new Refeitorio();
+				almoxarifado = new Almoxarifado();
+				banheiro = new Banheiro();
+				chuveiros = new Chuveiros();
+				corredor3A = new Corredor3Andar();
+				qpenta = new QPenta();
+				sprojecao = new SProjecao();
+				areaexterna = new AreaExterna();
+				corredorext = new CorredorExt();
+				corredorterreo = new CorredorTerreo();
+				dispensa = new Dispensa();
+				fbanheiro = new FBanheiro();
+				lavanderia = new Lavanderia();
+				salaarq = new SalaArquivo();
+				salaf = new SalaFuncionarios();
+				//Reset Das Variaveis Globais
+				acordou = true;
+				sAlmoxarifado = false;
+				sQPenta = true;
+				sChuveiros = false;
+				sBanheiro = false;
+				sProjecao = false;
+				calmo = true;
+				diagChuv = true;
+				entra1 = true;
+				mluz = true;
+				nojo = true;
+				cx = 0;
+				cy = 0;
+				px = 0;
+				py = 0;
+				sLavanderia = false;
+				sSalaF = false;
+				sSalaArq = false;
+				sDispensa = false;
+				sDesceu = true;
+				sCorredor = false;
+				badEnd1 = false;
+				refeitorio1 = false;
+				scozinha = false;
+				refeitorio2 = false;
+				slazer = false;
+				sbiblioteca = false;
+				subiu = false;
+				sDesceu = true;
+				xp, yp, xc, yc;
+				sorteInt = true;
+				queOuve = false;
+				mAfastar = true;
+				gritosB = false;
+				bibliotecaGatilho = false;
+				febiblioteca = true;
+				jogadorStop = true;
+				cont1 = 0;
+				cont2 = 0;
+				cont3 = 0;
+				cont4 = 0;
+				ativa;
+				perdeVida = false;
+				semBolsa = true;
+				chave = true;
+				cartaoAcesso = false;
+				kitDeLife = true;
+				lanterna = true;
+				lampada = false;
+				caixaDeFerramenta = false;
+				kitUsado = false;
+				lampadaON = false;
+				finalBom = false;
+				
+				resetGame = false;
+			}
+			//SomFundo 26/04/2016
+			if(musicaGlobal == true)
+			{
+				if(currentScene != scene.INTRO && currentScene != scene.MENU && currentScene != scene.GAMEOVER && currentScene != scene.OPTIONS && currentScene != scene.CREDITS)
+				{
+					somFundoJogo.play();
+				}
+				else
+				{
+					somFundoJogo.pause();
+				}
+			}
+			//SomFundo 26/04/2016
+		 //switch para chamar UPDATE e DRAW de acordo com a cena atual
+			switch (currentScene)
+			{
+			case scene.INTRO:
+					intro.Update();
+					intro.Draw();
+				break;
+			case scene.MENU:
+					menu.Update();
+					menu.Draw();
+				break;
+			case scene.CREDITS:
+					credits.Update();
+					credits.Draw();
+				break;
+			case scene.OPTIONS:
+					options.Update();
+					options.Draw();
+				break;
+			case scene.GAMEOVER:
+					gameover.Update();
+					gameover.Draw();
+				break;
+			case scene.BIBLIOTECA:
+					biblioteca.Update();
+					biblioteca.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.CORREDOR2:
+					corredor2A.Update();
+					corredor2A.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.COZINHA:
+					cozinha.Update();
+					cozinha.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.LAZER:
+					lazer.Update();
+					lazer.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.REFEITORIO:
+					refeitorio.Update();
+					refeitorio.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.ALMOXARIFADO:
+					almoxarifado.Update();
+					almoxarifado.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.BANHEIRO:
+					banheiro.Update();
+					banheiro.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.CHUVEIROS:
+					chuveiros.Update();
+					chuveiros.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.CORREDOR3:
+					corredor3A.Update();
+					corredor3A.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.QPENTA:
+					qpenta.Update();
+					qpenta.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.SPROJECAO:
+					sprojecao.Update();
+					sprojecao.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.AREAEXTERNA:
+					areaexterna.Update();
+					areaexterna.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.CORREDOREXT:
+					corredorext.Update();
+					corredorext.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.CORREDORTERREO:
+					corredorterreo.Update();
+					corredorterreo.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.DISPENSA:
+					dispensa.Update();
+					dispensa.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.FBANHEIRO:
+					fbanheiro.Update();
+					fbanheiro.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.LAVANDERIA:
+					lavanderia.Update();
+					lavanderia.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.SALAARQ:
+					salaarq.Update();
+					salaarq.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			case scene.SALAF:
+					salaf.Update();
+					salaf.Draw();
+					vida.Update();
+					vida.Draw();
+				break;
+			}
+			//Nova chamada do Loop em 30 Milisegundos
+			setTimeout(Loop,30);
+
+		 }
+		 //---------------------------------------------------------------------------------------------------------------
+		 this.mouse_down=function(mouse)
+		{	switch(currentScene)
+			{
+			case scene.INTRO:
+				intro.mouse_down(mouse);
+				break;
+			case scene.MENU:
+				menu.mouse_down(mouse);
+				break;
+			case scene.CREDITS:
+				credits.mouse_down(mouse);
+				break;
+			case scene.OPTIONS:
+				options.mouse_down(mouse);
+				break;
+			case scene.GAMEOVER:
+				gameover.mouse_down(mouse);
+				break;
+			case scene.BIBLIOTECA:
+				biblioteca.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.CORREDOR2:
+				corredor2A.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.COZINHA:
+				cozinha.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.LAZER:
+				lazer.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.REFEITORIO:
+				refeitorio.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.ALMOXARIFADO:
+				almoxarifado.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.BANHEIRO:
+				banheiro.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.CHUVEIROS:
+				chuveiros.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.CORREDOR3:
+				corredor3A.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.QPENTA:
+				qpenta.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.SPROJECAO:
+				sprojecao.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.AREAEXTERNA:
+				areaexterna.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.CORREDOREXT:
+				corredorext.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.CORREDORTERREO:
+				corredorterreo.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.DISPENSA:
+				dispensa.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.FBANHEIRO:
+				fbanheiro.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.LAVANDERIA:
+				lavanderia.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.SALAARQ:
+				salaarq.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			case scene.SALAF:
+				salaf.mouse_down(mouse);
+				vida.mouse_down(mouse);
+				break;
+			}
+		 }
+		 //Chamando o evento apos a referencia do pressionar_mouse na cena atual
+		 window.addEventListener('mousedown',mouse_down, true);
+		 //----------------------------------------------------------------------
+		 this.mouse_up=function(mouse)
+		{	switch(currentScene)
+			{
+			case scene.INTRO:
+				intro.mouse_up(mouse);
+				break;
+			case scene.MENU:
+				menu.mouse_up(mouse);
+				break;
+			case scene.CREDITS:
+				credits.mouse_up(mouse);
+				break;
+			case scene.OPTIONS:
+				options.mouse_up(mouse);
+				break;
+			case scene.GAMEOVER:
+				gameover.mouse_up(mouse);
+				break;
+			case scene.BIBLIOTECA:
+				biblioteca.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.CORREDOR2:
+				corredor2A.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.COZINHA:
+				cozinha.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.LAZER:
+				lazer.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.REFEITORIO:
+				refeitorio.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.ALMOXARIFADO:
+				almoxarifado.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.BANHEIRO:
+				banheiro.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.CHUVEIROS:
+				chuveiros.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.CORREDOR3:
+				corredor3A.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.QPENTA:
+				qpenta.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.SPROJECAO:
+				sprojecao.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.AREAEXTERNA:
+				areaexterna.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.CORREDOREXT:
+				corredorext.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.CORREDORTERREO:
+				corredorterreo.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.DISPENSA:
+				dispensa.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.FBANHEIRO:
+				fbanheiro.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.LAVANDERIA:
+				lavanderia.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.SALAARQ:
+				salaarq.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			case scene.SALAF:
+				salaf.mouse_up(mouse);
+				vida.mouse_up(mouse);
+				break;
+			}
+		 }
+		 //Chamando o evento apos a referencia do pressionar_mouse na cena atual
+		 window.addEventListener('mouseup',mouse_up, true);
+		 //----------------------------------------------------------------------------
+		 this.mouse_move=function(mouse)
+		{	switch(currentScene)
+			{
+			case scene.INTRO:
+				intro.mouse_move(mouse);
+				break;
+			case scene.MENU:
+				menu.mouse_move(mouse);
+				break;
+			case scene.CREDITS:
+				credits.mouse_move(mouse);
+				break;
+			case scene.OPTIONS:
+				options.mouse_move(mouse);
+				break;
+			case scene.GAMEOVER:
+				gameover.mouse_move(mouse);
+				break;
+			case scene.BIBLIOTECA:
+				biblioteca.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.CORREDOR2:
+				corredor2A.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.COZINHA:
+				cozinha.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.LAZER:
+				lazer.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.REFEITORIO:
+				refeitorio.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.ALMOXARIFADO:
+				almoxarifado.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.BANHEIRO:
+				banheiro.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.CHUVEIROS:
+				chuveiros.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.CORREDOR3:
+				corredor3A.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.QPENTA:
+				qpenta.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.SPROJECAO:
+				sprojecao.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.AREAEXTERNA:
+				areaexterna.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.CORREDOREXT:
+				corredorext.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.CORREDORTERREO:
+				corredorterreo.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.DISPENSA:
+				dispensa.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.FBANHEIRO:
+				fbanheiro.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.LAVANDERIA:
+				lavanderia.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.SALAARQ:
+				salaarq.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			case scene.SALAF:
+				salaf.mouse_move(mouse);
+				vida.mouse_move(mouse);
+				break;
+			}
+		 }
+		 //Chamando o evento apos a referencia do mover_mouse na cena atual
+		 window.addEventListener('mousemove',mouse_move, true);
+		 //----------------------------------------------------------------------
+
+		 this.key_down=function(tecla)
+		{	switch(currentScene)
+			{
+			case scene.INTRO:
+				intro.key_down(tecla);
+				break;
+			case scene.MENU:
+				menu.key_down(tecla);
+				break;
+			case scene.CREDITS:
+				credits.key_down(tecla);
+				break;
+			case scene.OPTIONS:
+				options.key_down(tecla);
+				break;
+			case scene.GAMEOVER:
+				gameover.key_down(tecla);
+				break;
+			case scene.BIBLIOTECA:
+				biblioteca.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.CORREDOR2:
+				corredor2A.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.COZINHA:
+				cozinha.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.LAZER:
+				lazer.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.REFEITORIO:
+				refeitorio.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.ALMOXARIFADO:
+				almoxarifado.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.BANHEIRO:
+				banheiro.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.CHUVEIROS:
+				chuveiros.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.CORREDOR3:
+				corredor3A.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.QPENTA:
+				qpenta.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.SPROJECAO:
+				sprojecao.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.AREAEXTERNA:
+				areaexterna.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.CORREDOREXT:
+				corredorext.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.CORREDORTERREO:
+				corredorterreo.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.DISPENSA:
+				dispensa.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.FBANHEIRO:
+				fbanheiro.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.LAVANDERIA:
+				lavanderia.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.SALAARQ:
+				salaarq.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			case scene.SALAF:
+				salaf.key_down(tecla);
+				vida.key_down(tecla);
+				break;
+			}
+		 }
+		 //Chamando o evento apos a referencia do pressionar_mouse na cena atual
+		 window.addEventListener('keydown', key_down , true);
+
+		 //-----------------------------------------------------------------------
+		 this.key_up=function(tecla)
+		{	switch(currentScene)
+			{
+			case scene.INTRO:
+				intro.key_up(tecla);
+				break;
+			case scene.MENU:
+				menu.key_up(tecla);
+				break;
+			case scene.CREDITS:
+				credits.key_up(tecla);
+				break;
+			case scene.OPTIONS:
+				options.key_up(tecla);
+				break;
+			case scene.GAMEOVER:
+				gameover.key_up(tecla);
+				break;
+			case scene.BIBLIOTECA:
+				biblioteca.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.CORREDOR2:
+				corredor2A.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.COZINHA:
+				cozinha.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.LAZER:
+				lazer.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.REFEITORIO:
+				refeitorio.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.ALMOXARIFADO:
+				almoxarifado.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.BANHEIRO:
+				banheiro.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.CHUVEIROS:
+				chuveiros.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.CORREDOR3:
+				corredor3A.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.QPENTA:
+				qpenta.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.SPROJECAO:
+				sprojecao.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.AREAEXTERNA:
+				areaexterna.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.CORREDOREXT:
+				corredorext.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.CORREDORTERREO:
+				corredorterreo.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.DISPENSA:
+				dispensa.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.FBANHEIRO:
+				fbanheiro.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.LAVANDERIA:
+				lavanderia.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.SALAARQ:
+				salaarq.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			case scene.SALAF:
+				salaf.key_up(tecla);
+				vida.key_up(tecla);
+				break;
+			}
+		 }
+		 //Chamando o evento apos a referencia do pressionar_mouse na cena atual
+		 window.addEventListener('keyup', key_up , true);
+
+		 //--------------------------------------------------------------------------
+		</script>
+	</body>
+
+</html>
